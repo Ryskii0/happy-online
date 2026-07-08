@@ -1,0 +1,676 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>地球Online · 大阪篇</title>
+    <link rel="stylesheet" href="./styles.css?v=20260708-105" />
+  </head>
+  <body>
+    <main class="phone-stage" aria-label="地球Online大阪篇欢迎页">
+      <section class="welcome-card screen active" data-screen="welcome">
+        <div class="bg-art" aria-hidden="true"></div>
+        <div class="petal-field" aria-hidden="true">
+          <span></span>
+          <span></span>
+          <span></span>
+          <span></span>
+          <span></span>
+          <span></span>
+          <span></span>
+          <span></span>
+          <span></span>
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+        <div class="name-tag name-tag-boluo" aria-label="玩家菠萝">菠萝</div>
+        <div class="name-tag name-tag-eee" aria-label="NPC鹅鹅鹅">鹅鹅鹅</div>
+
+        <button class="start-button" type="button">
+          <span>开启今日冒险</span>
+        </button>
+
+        <footer class="birthday-note">
+          <span>Happy Birthday 7.9</span>
+          <i aria-hidden="true">♡</i>
+        </footer>
+      </section>
+
+        <section class="map-card screen is-hidden" data-screen="map" aria-label="大阪冒险地图">
+          <button class="back-button map-return-button" type="button" data-route="welcome" aria-label="返回开屏">‹</button>
+
+        <header class="map-header">
+          <h1>大阪冒险地图</h1>
+        </header>
+
+        <nav class="quest-list" aria-label="四场景探索入口">
+          <button class="quest-card quest-matcha" type="button" data-route="matcha">
+            <img src="./2-抹茶.png" alt="" aria-hidden="true" />
+            <span class="quest-complete-badge" aria-hidden="true">✓</span>
+            <span class="quest-copy">
+              <strong>抹茶体验</strong>
+              <small>慢慢搅开一碗绿意</small>
+            </span>
+            <span class="quest-arrow">›</span>
+          </button>
+
+          <button class="quest-card quest-onsen" type="button" data-route="onsen">
+            <img src="./2-温泉.png" alt="" aria-hidden="true" />
+            <span class="quest-complete-badge" aria-hidden="true">✓</span>
+            <span class="quest-copy">
+              <strong>温泉</strong>
+              <small>大阪天然温泉</small>
+            </span>
+            <span class="quest-arrow">›</span>
+          </button>
+
+          <button class="quest-card quest-shrine" type="button" data-route="shrine">
+            <img src="./2-女巫.png" alt="" aria-hidden="true" />
+            <span class="quest-complete-badge" aria-hidden="true">✓</span>
+            <span class="quest-copy">
+              <strong>神社巫女</strong>
+              <small>去神社抽一枚好运</small>
+            </span>
+            <span class="quest-arrow">›</span>
+          </button>
+
+          <button class="quest-card quest-firework" type="button" data-route="hanabi">
+            <img src="./2-烟花.png" alt="" aria-hidden="true" />
+            <span class="quest-complete-badge" aria-hidden="true">✓</span>
+            <span class="quest-copy">
+              <strong>花火大会</strong>
+              <small>天神祭花火大会</small>
+            </span>
+            <span class="quest-arrow">›</span>
+          </button>
+        </nav>
+
+        <div class="npc-peek" aria-label="鹅鹅鹅 NPC">
+          <p class="npc-bubble" aria-live="polite">哇，我最爱喝抹茶了，快点抹茶体验试试！</p>
+          <div class="npc-avatar-wrap">
+            <img src="./左鹅鹅鹅.png" alt="鹅鹅鹅" />
+            <span>鹅鹅鹅</span>
+          </div>
+        </div>
+
+        <footer class="tab-bar" aria-label="底部导航">
+          <button class="is-active" type="button" data-route="map">
+            <svg class="tab-icon" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M4.5 11.2 12 5l7.5 6.2" />
+              <path d="M6.7 10.4v8h10.6v-8" />
+              <path d="M10 18.4v-4.2h4v4.2" />
+            </svg>
+            地图
+          </button>
+          <button type="button" data-route="backpack">
+            <svg class="tab-icon" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M7 9.5h10l-.7 9.2H7.7z" />
+              <path d="M9.2 9.5V8a2.8 2.8 0 0 1 5.6 0v1.5" />
+              <path d="M9.4 12.5h5.2" />
+            </svg>
+            图鉴
+          </button>
+          <button type="button" data-route="chat">
+            <svg class="tab-icon" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M5.5 7.4h13v8.7H10l-4.5 3z" />
+              <path d="M9 11.5h.1M12 11.5h.1M15 11.5h.1" />
+            </svg>
+            聊天
+          </button>
+          <button type="button" data-route="memory">
+            <svg class="tab-icon" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M17.9 4.8a7.6 7.6 0 1 0 1.3 14.4 6.4 6.4 0 0 1-1.3-14.4z" />
+            </svg>
+            回忆
+          </button>
+        </footer>
+      </section>
+
+      <section class="matcha-card screen is-hidden" data-screen="matcha" aria-label="抹茶体验">
+        <img class="matcha-bg" src="./3-抹茶-底图.png" alt="" aria-hidden="true" />
+        <div class="matcha-shade" aria-hidden="true"></div>
+
+        <button class="back-button" type="button" data-route="map" aria-label="返回大阪冒险地图">‹</button>
+
+        <header class="matcha-header">
+          <span>抹茶体验</span>
+          <strong>顺着茶香画圈圈吧</strong>
+        </header>
+
+        <div class="matcha-counter" aria-live="polite">🌀 ×0</div>
+
+        <canvas class="matcha-canvas" aria-hidden="true"></canvas>
+        <div class="stir-zone" aria-label="画圈搅拌区域">
+          <div class="stir-ring" aria-hidden="true"></div>
+          <div class="stir-hint">画满 10 圈获得徽章</div>
+        </div>
+
+        <div class="matcha-npc">
+          <div class="matcha-avatar-wrap">
+            <img src="./右鹅鹅鹅.png" alt="鹅鹅鹅" />
+            <span>鹅鹅鹅</span>
+          </div>
+          <p class="matcha-npc-bubble">搅起来搅起来，空气里都是茶香啦。</p>
+        </div>
+
+        <div class="badge-modal is-hidden" role="dialog" aria-modal="true" aria-label="获得徽章">
+          <div class="badge-card">
+            <div class="badge-knot" aria-hidden="true"></div>
+            <div class="badge-icon" aria-hidden="true">茶</div>
+            <span class="badge-eyebrow">御神籤 · OSAKA MATCHA</span>
+            <h2>抹茶修行达成</h2>
+            <p class="badge-result">慢慢搅开一碗绿意，抹茶体验完成。</p>
+            <div class="badge-actions">
+              <button class="return-map-button" type="button" data-route="map">收下签文</button>
+            </div>
+          </div>
+        </div>
+
+        <footer class="tab-bar" aria-label="底部导航">
+          <button type="button" data-route="map">
+            <svg class="tab-icon" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M4.5 11.2 12 5l7.5 6.2" />
+              <path d="M6.7 10.4v8h10.6v-8" />
+              <path d="M10 18.4v-4.2h4v4.2" />
+            </svg>
+            地图
+          </button>
+          <button type="button" data-route="backpack">
+            <svg class="tab-icon" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M7 9.5h10l-.7 9.2H7.7z" />
+              <path d="M9.2 9.5V8a2.8 2.8 0 0 1 5.6 0v1.5" />
+              <path d="M9.4 12.5h5.2" />
+            </svg>
+            图鉴
+          </button>
+          <button type="button" data-route="chat">
+            <svg class="tab-icon" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M5.5 7.4h13v8.7H10l-4.5 3z" />
+              <path d="M9 11.5h.1M12 11.5h.1M15 11.5h.1" />
+            </svg>
+            聊天
+          </button>
+          <button type="button" data-route="memory">
+            <svg class="tab-icon" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M17.9 4.8a7.6 7.6 0 1 0 1.3 14.4 6.4 6.4 0 0 1-1.3-14.4z" />
+            </svg>
+            回忆
+          </button>
+        </footer>
+      </section>
+
+      <section class="onsen-card screen is-hidden" data-screen="onsen" aria-label="温泉体验">
+        <img class="onsen-bg" src="./4-温泉-底图.png" alt="" aria-hidden="true" />
+        <div class="onsen-shade" aria-hidden="true"></div>
+
+        <button class="back-button" type="button" data-route="map" aria-label="返回大阪冒险地图">‹</button>
+
+        <header class="onsen-header">
+          <span>温泉体验</span>
+          <strong>点一点水面，让热汤慢慢醒来</strong>
+        </header>
+
+        <div class="onsen-counter" aria-live="polite">♨ ×0</div>
+
+        <div class="onsen-water-zone" aria-label="点击温泉水面">
+          <span class="onsen-hint">轻点水面 8 次</span>
+        </div>
+
+        <div class="onsen-steam-field" aria-hidden="true">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+
+        <div class="matcha-npc onsen-npc">
+          <div class="matcha-avatar-wrap">
+            <img src="./右鹅鹅鹅.png" alt="鹅鹅鹅" />
+            <span>鹅鹅鹅</span>
+          </div>
+          <p class="matcha-npc-bubble onsen-npc-bubble">泡汤要慢一点，先听水面咕噜一下。</p>
+        </div>
+
+        <div class="badge-modal onsen-badge-modal is-hidden" role="dialog" aria-modal="true" aria-label="获得温泉徽章">
+          <div class="badge-card">
+            <div class="badge-knot" aria-hidden="true"></div>
+            <div class="badge-icon onsen-badge-icon" aria-hidden="true">湯</div>
+            <span class="badge-eyebrow">御神籤 · OSAKA ONSEN</span>
+            <h2>温泉疗愈达成</h2>
+            <p class="onsen-badge-result">热气升起来了，今日疲惫成功蒸发。</p>
+            <div class="badge-actions">
+              <button class="return-map-button" type="button" data-route="map">收下签文</button>
+            </div>
+          </div>
+        </div>
+
+        <footer class="tab-bar" aria-label="底部导航">
+          <button type="button" data-route="map">
+            <svg class="tab-icon" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M4.5 11.2 12 5l7.5 6.2" />
+              <path d="M6.7 10.4v8h10.6v-8" />
+              <path d="M10 18.4v-4.2h4v4.2" />
+            </svg>
+            地图
+          </button>
+          <button type="button" data-route="backpack">
+            <svg class="tab-icon" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M7 9.5h10l-.7 9.2H7.7z" />
+              <path d="M9.2 9.5V8a2.8 2.8 0 0 1 5.6 0v1.5" />
+              <path d="M9.4 12.5h5.2" />
+            </svg>
+            图鉴
+          </button>
+          <button type="button" data-route="chat">
+            <svg class="tab-icon" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M5.5 7.4h13v8.7H10l-4.5 3z" />
+              <path d="M9 11.5h.1M12 11.5h.1M15 11.5h.1" />
+            </svg>
+            聊天
+          </button>
+          <button type="button" data-route="memory">
+            <svg class="tab-icon" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M17.9 4.8a7.6 7.6 0 1 0 1.3 14.4 6.4 6.4 0 0 1-1.3-14.4z" />
+            </svg>
+            回忆
+          </button>
+        </footer>
+      </section>
+
+      <section class="shrine-card screen is-hidden" data-screen="shrine" aria-label="神社巫女写绘马">
+        <img class="shrine-bg" src="./5-绘马.png" alt="" aria-hidden="true" />
+        <div class="shrine-shade" aria-hidden="true"></div>
+
+        <button class="back-button" type="button" data-route="map" aria-label="返回大阪冒险地图">‹</button>
+
+        <header class="shrine-header">
+          <span>神社巫女</span>
+          <strong>写一枚绘马，把心愿挂上去</strong>
+        </header>
+
+        <div class="ema-stage">
+          <div class="ema-rope" aria-hidden="true"></div>
+          <button class="ema-plaque" type="button" aria-label="点击写下你的心愿">
+            <span class="ema-front">
+              <span class="ema-hint">✍️ 点击写下你的心愿</span>
+              <span class="ema-wish"></span>
+            </span>
+            <span class="ema-back">
+              <span class="ema-reply"></span>
+            </span>
+          </button>
+        </div>
+
+        <div class="matcha-npc shrine-npc">
+          <div class="matcha-avatar-wrap">
+            <img src="./右鹅鹅鹅.png" alt="鹅鹅鹅" />
+            <span>鹅鹅鹅</span>
+          </div>
+          <p class="matcha-npc-bubble shrine-npc-bubble">写认真一点，神明说不定真的会偷看。</p>
+        </div>
+
+        <div class="wish-panel" aria-label="写下心愿">
+          <label for="wish-input">写给未来的自己</label>
+          <textarea id="wish-input" maxlength="30" placeholder="写给未来的自己..."></textarea>
+          <div class="wish-panel-footer">
+            <span class="wish-count">0/30</span>
+            <button class="wish-submit" type="button">挂上去</button>
+          </div>
+        </div>
+
+        <div class="badge-modal shrine-badge-modal is-hidden" role="dialog" aria-modal="true" aria-label="获得神社徽章">
+          <div class="badge-card">
+            <div class="badge-knot" aria-hidden="true"></div>
+            <div class="badge-icon shrine-badge-icon" aria-hidden="true">願</div>
+            <span class="badge-eyebrow">御神籤 · SUMIYOSHI</span>
+            <h2>神社祈福达成</h2>
+            <p class="shrine-badge-result">心愿已经挂上绘马架，风会替你保管。</p>
+            <div class="badge-actions">
+              <button class="return-map-button" type="button" data-route="map">收下签文</button>
+            </div>
+          </div>
+        </div>
+
+        <footer class="tab-bar" aria-label="底部导航">
+          <button type="button" data-route="map">
+            <svg class="tab-icon" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M4.5 11.2 12 5l7.5 6.2" />
+              <path d="M6.7 10.4v8h10.6v-8" />
+              <path d="M10 18.4v-4.2h4v4.2" />
+            </svg>
+            地图
+          </button>
+          <button type="button" data-route="backpack">
+            <svg class="tab-icon" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M7 9.5h10l-.7 9.2H7.7z" />
+              <path d="M9.2 9.5V8a2.8 2.8 0 0 1 5.6 0v1.5" />
+              <path d="M9.4 12.5h5.2" />
+            </svg>
+            图鉴
+          </button>
+          <button type="button" data-route="chat">
+            <svg class="tab-icon" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M5.5 7.4h13v8.7H10l-4.5 3z" />
+              <path d="M9 11.5h.1M12 11.5h.1M15 11.5h.1" />
+            </svg>
+            聊天
+          </button>
+          <button type="button" data-route="memory">
+            <svg class="tab-icon" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M17.9 4.8a7.6 7.6 0 1 0 1.3 14.4 6.4 6.4 0 0 1-1.3-14.4z" />
+            </svg>
+            回忆
+          </button>
+        </footer>
+      </section>
+
+      <section class="hanabi-card screen is-hidden" data-screen="hanabi" aria-label="花火大会今日回忆">
+        <img class="hanabi-bg" src="./6-烟花-底图.png" alt="" aria-hidden="true" />
+        <div class="hanabi-shade" aria-hidden="true"></div>
+        <canvas class="hanabi-canvas" aria-label="点击屏幕放烟花"></canvas>
+
+        <button class="back-button hanabi-back-button" type="button" data-route="map" aria-label="返回大阪冒险地图">‹</button>
+        <div class="hanabi-counter" aria-live="polite">🎆 ×0/10</div>
+        <p class="hanabi-hint">点击夜空，放满十朵花火</p>
+
+        <div class="memory-scene" aria-live="polite">
+          <img class="memory-paper" src="./信纸.png" alt="" aria-hidden="true" />
+          <img class="kimono-eee" src="./和服鹅鹅鹅.png" alt="和服鹅鹅鹅" />
+          <article class="memory-letter">
+            <h2>今日回忆 🌙</h2>
+            <p class="memory-copy"></p>
+            <div class="memory-actions">
+              <button class="memory-save-button" type="button">♡ 收藏这段回忆</button>
+              <button class="memory-map-button" type="button" data-route="map">回到大阪地图</button>
+            </div>
+          </article>
+        </div>
+      </section>
+
+        <section class="backpack-card screen is-hidden" data-screen="backpack" aria-label="图鉴背包">
+          <img class="backpack-bg" src="./底图.png" alt="" aria-hidden="true" />
+          <div class="backpack-shade" aria-hidden="true"></div>
+
+          <button class="back-button backpack-back-button" type="button" data-route="map" aria-label="返回大阪冒险地图">‹</button>
+
+          <header class="backpack-header">
+            <strong>图鉴背包</strong>
+            <span>收集大阪的碎片记忆</span>
+          </header>
+
+          <section class="album-shell" aria-label="图鉴背包">
+            <div class="album-toolbar">
+              <div class="album-filter-row" aria-label="图鉴分类">
+                <button class="album-filter-chip is-active" type="button" data-category="all">全部</button>
+                <button class="album-filter-chip" type="button" data-category="food">食物</button>
+                <button class="album-filter-chip" type="button" data-category="scenery">风景</button>
+                <button class="album-filter-chip" type="button" data-category="item">道具</button>
+              </div>
+              <p class="album-progress" aria-live="polite">收集更多回忆吧，一起填满图鉴星空吧。</p>
+            </div>
+
+            <div class="album-grid" aria-live="polite"></div>
+          </section>
+
+          <input class="album-file-input album-camera-input" type="file" accept="image/*" capture="environment" hidden />
+          <input class="album-file-input album-upload-input" type="file" accept="image/*" hidden />
+
+          <div class="album-sheet source-sheet is-hidden" aria-hidden="true">
+            <div class="album-sheet-card source-sheet-card">
+              <div class="camera-sheet-copy">
+                <strong>先选入口</strong>
+                <span>手机上建议直接拍，补图就从相册选。</span>
+              </div>
+              <div class="album-sheet-actions album-sheet-actions-stack">
+                <button class="album-sheet-button album-source-camera" type="button">现在拍一张</button>
+                <button class="album-sheet-button album-source-upload" type="button">从相册选择</button>
+                <button class="album-sheet-button album-source-cancel" type="button">先不收</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="album-sheet label-sheet is-hidden" aria-hidden="true">
+            <div class="album-sheet-card label-sheet-card">
+              <div class="camera-sheet-copy">
+                  <strong>记录这一格图鉴</strong>
+                  <span>现在先直接用原图保存，方便你测试交互；时间会自动记录，物品名必填。</span>
+              </div>
+              <div class="album-label-preview">
+                <img class="album-label-preview-image" alt="待生成的邮票原图" />
+              </div>
+              <div class="album-meta-chip album-timestamp-chip" aria-live="polite"></div>
+                <div class="album-label-wrap">
+                  <span>分类标签</span>
+                  <div class="album-category-row" aria-label="选择图鉴分类">
+                    <button class="album-category-chip" type="button" data-category="food">食物</button>
+                    <button class="album-category-chip" type="button" data-category="scenery">风景</button>
+                    <button class="album-category-chip" type="button" data-category="item">道具</button>
+                  </div>
+                </div>
+              <label class="album-label-wrap" for="album-label-input">
+                <span>物品名</span>
+                <input id="album-label-input" class="album-label-input" type="text" maxlength="20" placeholder="比如：抹茶碗 / 神社灯笼" />
+              </label>
+              <label class="album-label-wrap" for="album-message-input">
+                <span>想说的话（可选）</span>
+                <textarea id="album-message-input" class="album-message-input" maxlength="60" placeholder="比如：今天在大阪看到它的时候，第一反应就是想拍给你。"></textarea>
+              </label>
+              <div class="album-sheet-actions">
+                <button class="album-sheet-button album-label-cancel" type="button">先放一边</button>
+                <button class="album-sheet-button album-label-save" type="button">保存到图鉴</button>
+              </div>
+                <div class="album-sheet-actions album-sheet-actions-single">
+                  <button class="album-sheet-button album-label-download" type="button">保存图片到本地</button>
+                </div>
+            </div>
+          </div>
+
+          <footer class="tab-bar" aria-label="底部导航">
+            <button type="button" data-route="map">
+              <svg class="tab-icon" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M4.5 11.2 12 5l7.5 6.2" />
+                <path d="M6.7 10.4v8h10.6v-8" />
+                <path d="M10 18.4v-4.2h4v4.2" />
+              </svg>
+              地图
+            </button>
+            <button class="is-active" type="button" data-route="backpack">
+              <svg class="tab-icon" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M7 9.5h10l-.7 9.2H7.7z" />
+                <path d="M9.2 9.5V8a2.8 2.8 0 0 1 5.6 0v1.5" />
+                <path d="M9.4 12.5h5.2" />
+              </svg>
+              图鉴
+            </button>
+            <button type="button" data-route="chat">
+              <svg class="tab-icon" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M5.5 7.4h13v8.7H10l-4.5 3z" />
+                <path d="M9 11.5h.1M12 11.5h.1M15 11.5h.1" />
+              </svg>
+              聊天
+            </button>
+            <button type="button" data-route="memory">
+              <svg class="tab-icon" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M17.9 4.8a7.6 7.6 0 1 0 1.3 14.4 6.4 6.4 0 0 1-1.3-14.4z" />
+              </svg>
+              回忆
+            </button>
+          </footer>
+        </section>
+
+        <section class="chat-card screen is-hidden" data-screen="chat" aria-label="和鹅鹅鹅聊天">
+          <img class="chat-bg" src="./7-聊天-底图.png" alt="" aria-hidden="true" />
+          <div class="chat-shade" aria-hidden="true"></div>
+
+          <button class="back-button chat-back-button" type="button" data-route="map" aria-label="返回大阪冒险地图">‹</button>
+
+          <section class="chat-shell" aria-label="聊天区域">
+            <section class="chat-scene-card" aria-label="上海办公室场景">
+              <div class="chat-scene-copy">
+                <p class="chat-subtitle">她会在办公室里乱走、摸鱼、认真办公。你先看看她在干嘛，再戳她聊天。</p>
+                <p class="chat-scene-status" aria-live="polite"></p>
+              </div>
+              <div class="chat-memory-chips" aria-live="polite"></div>
+
+              <div class="chat-office-scene" aria-live="polite">
+                <span class="chat-office-hotspot is-desk">工位</span>
+                <span class="chat-office-hotspot is-snack">零食区</span>
+                <span class="chat-office-hotspot is-coworker">同事位</span>
+                <span class="chat-office-hotspot is-lunch">饭位</span>
+                <span class="chat-office-hotspot is-hall">走道</span>
+
+                <button class="chat-scene-character" type="button" aria-label="戳鹅鹅鹅聊天">
+                  <span class="chat-scene-bubble" aria-live="polite"></span>
+                  <img class="chat-scene-sprite" src="./人物/idle.png" alt="鹅鹅鹅" />
+                  <span class="chat-scene-zone"></span>
+                </button>
+              </div>
+
+              <p class="chat-scene-hint" aria-live="polite"></p>
+            </section>
+
+            <section class="chat-sheet is-hidden" aria-label="聊天浮屏" aria-hidden="true">
+              <div class="chat-sheet-handle" aria-hidden="true"></div>
+
+              <div class="chat-sheet-header">
+                <div>
+                  <span>戳到她了</span>
+                  <strong>和鹅鹅鹅说两句</strong>
+                </div>
+                <button class="chat-sheet-close" type="button">收起</button>
+              </div>
+
+              <div class="chat-thread" aria-live="polite"></div>
+
+              <form class="chat-composer" autocomplete="off">
+                <label class="sr-only" for="chat-input">输入想和鹅鹅鹅说的话</label>
+                <textarea id="chat-input" class="chat-input" rows="1" maxlength="120" placeholder="比如：我最喜欢今天的哪个瞬间？"></textarea>
+                <button class="chat-send-button" type="submit">发送</button>
+              </form>
+            </section>
+          </section>
+
+          <footer class="tab-bar" aria-label="底部导航">
+            <button type="button" data-route="map">
+              <svg class="tab-icon" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M4.5 11.2 12 5l7.5 6.2" />
+                <path d="M6.7 10.4v8h10.6v-8" />
+                <path d="M10 18.4v-4.2h4v4.2" />
+              </svg>
+              地图
+            </button>
+            <button type="button" data-route="backpack">
+              <svg class="tab-icon" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M7 9.5h10l-.7 9.2H7.7z" />
+                <path d="M9.2 9.5V8a2.8 2.8 0 0 1 5.6 0v1.5" />
+                <path d="M9.4 12.5h5.2" />
+              </svg>
+              图鉴
+            </button>
+            <button class="is-active" type="button" data-route="chat">
+              <svg class="tab-icon" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M5.5 7.4h13v8.7H10l-4.5 3z" />
+                <path d="M9 11.5h.1M12 11.5h.1M15 11.5h.1" />
+              </svg>
+              聊天
+            </button>
+            <button type="button" data-route="memory">
+              <svg class="tab-icon" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M17.9 4.8a7.6 7.6 0 1 0 1.3 14.4 6.4 6.4 0 0 1-1.3-14.4z" />
+              </svg>
+              回忆
+            </button>
+          </footer>
+        </section>
+
+        <section class="memory-hub-card screen is-hidden" data-screen="memory" aria-label="回忆页面">
+          <img class="memory-hub-bg" src="./底图.png" alt="" aria-hidden="true" />
+          <div class="memory-hub-shade" aria-hidden="true"></div>
+
+          <button class="back-button memory-hub-back-button" type="button" data-route="map" aria-label="返回大阪冒险地图">‹</button>
+
+          <header class="memory-hub-header">
+            <strong>回忆</strong>
+            <span class="memory-date-label">2024年7月9日</span>
+          </header>
+
+          <section class="memory-hub-shell" aria-label="回忆汇总">
+            <section class="memory-timeline-panel" aria-label="记忆时间线">
+              <div class="memory-section-heading">
+                <span>MEMORY LOG</span>
+              </div>
+              <div class="memory-stat-strip" aria-label="回忆统计">
+                <span class="memory-task-count">0 / 4 任务完成</span>
+                <span class="memory-sticker-count">0 枚图鉴</span>
+                <span class="memory-chat-count">0 段聊天</span>
+              </div>
+              <div class="memory-timeline"></div>
+            </section>
+
+            <button class="memory-floating-bubble" type="button" data-route="chat">今天好充实呀！要不要看看回忆？</button>
+          </section>
+
+          <div class="memory-letter-sheet is-hidden" aria-hidden="true">
+            <div class="memory-letter-sheet-card">
+              <div class="memory-letter-sheet-copy">
+                <strong>今日来信</strong>
+                <span>这封信会把四段体验、邮票收藏和聊天片段整理在一起。</span>
+              </div>
+              <article class="memory-letter-paper">
+                <p class="memory-letter-output"></p>
+              </article>
+              <div class="memory-letter-sheet-actions">
+                <button class="memory-letter-save" type="button">保存到相册</button>
+                <button class="memory-letter-copy" type="button">复制文字</button>
+                <button class="memory-letter-share" type="button">分享到好友</button>
+              </div>
+              <div class="memory-letter-sheet-actions memory-letter-sheet-actions-secondary">
+                <button class="memory-letter-close" type="button">先收起来</button>
+                <button class="memory-letter-generate" type="button">重新写一封</button>
+              </div>
+            </div>
+          </div>
+
+          <footer class="tab-bar" aria-label="底部导航">
+            <button type="button" data-route="map">
+              <svg class="tab-icon" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M4.5 11.2 12 5l7.5 6.2" />
+                <path d="M6.7 10.4v8h10.6v-8" />
+                <path d="M10 18.4v-4.2h4v4.2" />
+              </svg>
+              地图
+            </button>
+            <button type="button" data-route="backpack">
+              <svg class="tab-icon" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M7 9.5h10l-.7 9.2H7.7z" />
+                <path d="M9.2 9.5V8a2.8 2.8 0 0 1 5.6 0v1.5" />
+                <path d="M9.4 12.5h5.2" />
+              </svg>
+              图鉴
+            </button>
+            <button type="button" data-route="chat">
+              <svg class="tab-icon" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M5.5 7.4h13v8.7H10l-4.5 3z" />
+                <path d="M9 11.5h.1M12 11.5h.1M15 11.5h.1" />
+              </svg>
+              聊天
+            </button>
+            <button class="is-active" type="button" data-route="memory">
+              <svg class="tab-icon" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M17.9 4.8a7.6 7.6 0 1 0 1.3 14.4 6.4 6.4 0 0 1-1.3-14.4z" />
+              </svg>
+              回忆
+            </button>
+          </footer>
+        </section>
+    </main>
+
+    <button class="pet-dock is-hidden" type="button" aria-label="打开鹅鹅鹅聊天入口">
+      <img src="./左鹅鹅鹅.png" alt="桌宠鹅鹅鹅" />
+      <span>戳我聊天</span>
+    </button>
+
+        <script src="./ai-config.local.js?v=20260708-105"></script>
+        <script src="./app.js?v=20260708-105"></script>
+  </body>
+</html>
