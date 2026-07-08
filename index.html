@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>地球Online · 大阪篇</title>
-    <link rel="stylesheet" href="./styles.css?v=20260708-105" />
+    <link rel="stylesheet" href="./styles.css?v=20260708-106" />
   </head>
   <body>
     <main class="phone-stage" aria-label="地球Online大阪篇欢迎页">
@@ -147,10 +147,10 @@
         </div>
 
         <div class="matcha-npc">
-          <div class="matcha-avatar-wrap">
+          <button class="matcha-avatar-wrap npc-chat-trigger" type="button" data-route="chat" aria-label="和鹅鹅鹅聊天">
             <img src="./右鹅鹅鹅.png" alt="鹅鹅鹅" />
             <span>鹅鹅鹅</span>
-          </div>
+          </button>
           <p class="matcha-npc-bubble">搅起来搅起来，空气里都是茶香啦。</p>
         </div>
 
@@ -224,10 +224,10 @@
         </div>
 
         <div class="matcha-npc onsen-npc">
-          <div class="matcha-avatar-wrap">
+          <button class="matcha-avatar-wrap npc-chat-trigger" type="button" data-route="chat" aria-label="和鹅鹅鹅聊天">
             <img src="./右鹅鹅鹅.png" alt="鹅鹅鹅" />
             <span>鹅鹅鹅</span>
-          </div>
+          </button>
           <p class="matcha-npc-bubble onsen-npc-bubble">泡汤要慢一点，先听水面咕噜一下。</p>
         </div>
 
@@ -302,10 +302,10 @@
         </div>
 
         <div class="matcha-npc shrine-npc">
-          <div class="matcha-avatar-wrap">
+          <button class="matcha-avatar-wrap npc-chat-trigger" type="button" data-route="chat" aria-label="和鹅鹅鹅聊天">
             <img src="./右鹅鹅鹅.png" alt="鹅鹅鹅" />
             <span>鹅鹅鹅</span>
-          </div>
+          </button>
           <p class="matcha-npc-bubble shrine-npc-bubble">写认真一点，神明说不定真的会偷看。</p>
         </div>
 
@@ -375,7 +375,9 @@
 
         <div class="memory-scene" aria-live="polite">
           <img class="memory-paper" src="./信纸.png" alt="" aria-hidden="true" />
-          <img class="kimono-eee" src="./和服鹅鹅鹅.png" alt="和服鹅鹅鹅" />
+          <button class="kimono-eee-button npc-chat-trigger" type="button" data-route="chat" aria-label="和鹅鹅鹅聊天">
+            <img class="kimono-eee" src="./和服鹅鹅鹅.png" alt="和服鹅鹅鹅" />
+          </button>
           <article class="memory-letter">
             <h2>今日回忆 🌙</h2>
             <p class="memory-copy"></p>
@@ -670,7 +672,7 @@
       <span>戳我聊天</span>
     </button>
 
-        <script src="./ai-config.local.js?v=20260708-105"></script>
-        <script src="./app.js?v=20260708-105"></script>
+        <script src="./ai-config.local.js?v=20260708-106"></script>
+        <script src="./app.js?v=20260708-106"></script>
   </body>
 </html>

@@ -1241,6 +1241,17 @@ body {
   gap: 1px;
 }
 
+.npc-chat-trigger {
+  appearance: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  background: transparent;
+  cursor: pointer;
+  pointer-events: auto;
+}
+
 .matcha-avatar-wrap img {
   width: clamp(76px, 22vw, 96px);
   height: auto;
@@ -1587,18 +1598,28 @@ body {
   transform: translate(-50%, -50%);
 }
 
-.kimono-eee {
+.kimono-eee-button {
   position: absolute;
   right: max(-12px, calc(50% - 218px));
   bottom: calc(54px + env(safe-area-inset-bottom));
   width: min(39vw, 165px);
-  height: auto;
-  filter: drop-shadow(0 14px 22px rgba(4, 4, 15, 0.38));
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  pointer-events: auto;
   transform: translateY(12px);
   transition: transform 800ms ease 180ms;
 }
 
-.hanabi-card.is-memory-ready .kimono-eee {
+.kimono-eee {
+  display: block;
+  width: 100%;
+  height: auto;
+  filter: drop-shadow(0 14px 22px rgba(4, 4, 15, 0.38));
+}
+
+.hanabi-card.is-memory-ready .kimono-eee-button {
   transform: translateY(0);
 }
 

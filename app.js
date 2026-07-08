@@ -323,6 +323,7 @@ const albumLabelCancel = document.querySelector(".album-label-cancel");
 const albumLabelSave = document.querySelector(".album-label-save");
 const albumLabelDownload = document.querySelector(".album-label-download");
 const chatShell = document.querySelector(".chat-shell");
+const chatCard = document.querySelector(".chat-card");
 const chatSceneStatus = document.querySelector(".chat-scene-status");
 const chatSceneHint = document.querySelector(".chat-scene-hint");
 const chatSceneCharacter = document.querySelector(".chat-scene-character");
