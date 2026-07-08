@@ -5,7 +5,7 @@ const ALBUM_DB_NAME = "eo-album-db";
 const ALBUM_STORE_NAME = "stickers";
 const ALBUM_DB_VERSION = 1;
 const STORY_DATE_TEXT = "2024年7月9日";
-const ALBUM_AI_DISABLED = true;
+const ALBUM_AI_DISABLED = false;
 const MEMORY_LIMIT = 120;
 const MEMORY_SEED_VERSION = 1;
 const CHAT_RECENT_CONTEXT_LIMIT = 16;
@@ -449,6 +449,14 @@ function syncViewportMetrics() {
   if (nextHeight > 0) {
     document.documentElement.style.setProperty("--app-height", `${Math.round(nextHeight)}px`);
   }
+
+  const activeTabBar = document.querySelector(".screen.active .tab-bar");
+  const fallbackTabBar = document.querySelector(".tab-bar");
+  const tabBar = activeTabBar || fallbackTabBar;
+  const tabBarHeight = Math.round(tabBar?.getBoundingClientRect().height || 0);
+  if (tabBarHeight > 0) {
+    document.documentElement.style.setProperty("--tab-bar-height", `${tabBarHeight}px`);
+  }
 }
 
 function loadState() {
@@ -770,11 +778,13 @@ async function loadAlbumItems() {
         id: item.id,
         label: item.label,
         message: item.message || "",
+        caption: item.caption || "",
           category: item.category || inferAlbumCategory(item.label || "", item.message || ""),
         ts: item.ts,
         timestampText: item.timestampText || "",
         sourceType: item.sourceType || "upload",
         baseColor: item.baseColor || "#e8b8c4",
+        blob: item.blob,
         previewUrl,
       };
     });
@@ -1290,11 +1300,17 @@ function buildMemoryEntryDisplay(item) {
   }
 
   if (item.type === "event") {
+    const stampCaption = (item.stampCaption || item.caption || "").trim();
     return {
       icon: "📸",
       tag: "图鉴收集",
-      summary: item.summary || `上传了「${stickerLabel}」，先用原图收进图鉴背包`,
-      diary: ensureBoloDiaryLead(item.diary || `「${time} 📸 图鉴收集」\n菠萝把「${stickerLabel}」收进图鉴里了。虽然这版先用原图记录，但那个瞬间的心情没有少半点，像一张被认真夹进旅行手账的小纸片。`),
+      summary: item.summary || (stampCaption
+        ? `上传了「${stickerLabel}」，回忆页题签是「${stampCaption}」`
+        : `上传了「${stickerLabel}」，收进图鉴背包`)
+      ,
+      diary: ensureBoloDiaryLead(item.diary || (stampCaption
+        ? `「${time} 📸 图鉴收集」\n菠萝把「${stickerLabel}」收进图鉴里了。我顺手替这一格写下「${stampCaption}」，这样等菠萝回头翻回忆页时，这个瞬间就不只是被拍下来了，还被好好命名了。`
+        : `「${time} 📸 图鉴收集」\n菠萝把「${stickerLabel}」收进图鉴里了。那个瞬间的心情没有少半点，像一张被认真夹进旅行手账的小纸片。`)),
     };
   }
 
@@ -1781,28 +1797,7 @@ async function generateMemoryLetter(forceRegenerate = false) {
   }
 
   setMemoryLetterPending(true);
-  let text = "";
-
-  try {
-    const runtimeConfig = getAiRuntimeConfig();
-    if (runtimeConfig.textEndpoint) {
-      const response = await requestJsonAi({
-        endpoint: runtimeConfig.textEndpoint,
-        headerName: runtimeConfig.textAuthHeader,
-        apiKey: runtimeConfig.apiKey,
-        body: {
-          prompt: buildTodayLetterPrompt(),
-        },
-      });
-      text = extractTextResult(response).trim();
-    }
-  } catch {
-    text = "";
-  }
-
-  if (!text) {
-    text = buildTodayLetterFallback();
-  }
+  const text = buildTodayLetterFallback();
 
   if (memoryLetterOutput) {
     memoryLetterOutput.textContent = text;
@@ -2252,12 +2247,11 @@ function buildStampTextPrompt({ label, message, timestampText, sourceType }) {
   const sourceText = sourceType === "camera" ? "现场拍摄" : "相册上传";
   return [
     "你是生日旅行纪念册的文字设计助手。",
-    "请为一枚旅行邮票生成非常短的邮票文案与视觉底色建议。",
+    "请为一枚旅行邮票生成非常短的邮票文案。",
     "要求：",
     "1. 文案 1 句，12-24 字，温柔、克制、像手账上的题签。",
-    "2. 给出一个适合这张图的底色 hex，例如 #e7b8c6。",
-    "3. 不要解释理由。",
-    "4. 只返回 JSON：{\"caption\":\"...\",\"baseColor\":\"#rrggbb\"}",
+    "2. 不要解释理由。",
+    "3. 只返回 JSON：{\"caption\":\"...\"}",
     `物品名：${label}`,
     `补充想说的话：${message || "无"}`,
     `时间：${timestampText}`,
@@ -2500,9 +2494,7 @@ function normalizeStampTextResult(rawText, fallbackBaseColor) {
       caption: typeof parsed.caption === "string" && parsed.caption.trim()
         ? parsed.caption.trim()
         : "",
-      baseColor: typeof parsed.baseColor === "string" && /^#([0-9a-fA-F]{6})$/.test(parsed.baseColor)
-        ? parsed.baseColor
-        : fallbackBaseColor,
+      baseColor: fallbackBaseColor,
     };
   } catch {
     return {
@@ -3159,6 +3151,7 @@ async function requestAiStampRender({ imageBlob, label, message, timestamp, time
 
   return {
     blob,
+    caption,
     baseColor,
     timestamp,
     timestampText,
@@ -3204,6 +3197,7 @@ async function buildAlbumDirectSaveResult({ imageBlob, timestamp, timestampText,
   const image = await loadImageFromBlob(imageBlob);
   return {
     blob: imageBlob,
+    caption: "",
     baseColor: deriveStampBaseColor(image),
     timestamp,
     timestampText,
@@ -3219,7 +3213,7 @@ async function saveAlbumItem({ label, message }) {
 
   try {
     setAlbumSavePending(true);
-    showAlbumMessage("先用原图把这一格保存下来，方便你测试交互。");
+    showAlbumMessage(ALBUM_AI_DISABLED ? "先用原图把这一格保存下来，方便你测试交互。" : "正在生成贴纸，并整理这格回忆的题签…");
     const result = ALBUM_AI_DISABLED
       ? await buildAlbumDirectSaveResult({
         imageBlob: albumPendingSourceBlob,
@@ -3240,6 +3234,7 @@ async function saveAlbumItem({ label, message }) {
         id: albumEditingItemId || `stamp-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
       label,
       message,
+        caption: result.caption || "",
         category: albumPendingCategory || inferAlbumCategory(label, message),
       ts: result.timestamp,
       timestampText: result.timestampText,
@@ -3255,8 +3250,13 @@ async function saveAlbumItem({ label, message }) {
           ? `收下一枚「${label}」图鉴，还写下了「${message.trim()}」`
           : `收下一枚「${label}」图鉴`,
       type: "event",
-        summary: `${albumEditingItemId ? "编辑了" : "上传了"}「${label}」，收进${getAlbumCategoryLabel(item.category)}图鉴`,
-        diary: `「${formatClockTime(result.timestamp)} 📸 图鉴收集」\n菠萝把「${label}」收进图鉴背包了。这一版我先替菠萝用原图兜底保存，等交互都测顺了，再把那层 AI 贴纸魔法认真接回来。`,
+        summary: result.caption
+          ? `${albumEditingItemId ? "编辑了" : "上传了"}「${label}」，回忆页题签是「${result.caption}」`
+          : `${albumEditingItemId ? "编辑了" : "上传了"}「${label}」，收进${getAlbumCategoryLabel(item.category)}图鉴`,
+        diary: result.caption
+          ? `「${formatClockTime(result.timestamp)} 📸 图鉴收集」\n菠萝把「${label}」收进图鉴背包了。我顺手替这一格写下「${result.caption}」，这样等菠萝回头翻回忆页时，这个瞬间就不只是被拍下来了，还被认真命名了。`
+          : `「${formatClockTime(result.timestamp)} 📸 图鉴收集」\n菠萝把「${label}」收进图鉴背包了。这个瞬间已经被好好留住了，后面再翻出来看，应该还是会一下子想起当时为什么想拍它。`,
+        stampCaption: result.caption || "",
         relatedLabel: label,
       imp: 6,
     });

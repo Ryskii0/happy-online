@@ -10,6 +10,15 @@
   --app-height: 100svh;
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --tab-bar-bottom-offset: 10px;
+  --tab-bar-height: 50px;
+  --chat-sheet-gap: 15px;
+  --chat-sheet-keyboard-lift: 10px;
+  --chat-sheet-min-height: min(52vh, 430px);
+  --chat-sheet-min-height-keyboard: min(40vh, 320px);
+  --chat-sheet-max-height: min(71vh, 590px);
+  --chat-sheet-max-height-keyboard: min(68vh, 560px);
+  --chat-thread-min-height: clamp(188px, 31vh, 300px);
   --backpack-header-top: max(24px, calc(var(--safe-top) + 18px));
   --backpack-shell-top: max(126px, calc(var(--safe-top) + 112px));
 }
@@ -643,7 +652,7 @@ body {
   --tab-bar-alpha: 0.22;
   position: absolute;
   left: 50%;
-  bottom: calc(10px + env(safe-area-inset-bottom));
+  bottom: calc(var(--tab-bar-bottom-offset) + var(--safe-bottom));
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   width: calc(100% - 30px);
@@ -2207,7 +2216,7 @@ body {
 
 .chat-shell {
   position: absolute;
-  inset: max(56px, calc(env(safe-area-inset-top) + 42px)) 18px calc(90px + env(safe-area-inset-bottom));
+  inset: max(56px, calc(env(safe-area-inset-top) + 42px)) 18px 0;
   overflow: visible;
   background: transparent;
   border: 0;
@@ -2403,7 +2412,7 @@ body {
 .chat-sheet {
   position: absolute;
   right: 16px;
-  bottom: calc(82px + env(safe-area-inset-bottom));
+  bottom: calc(var(--safe-bottom) + var(--tab-bar-bottom-offset) + var(--tab-bar-height) + var(--chat-sheet-gap));
   left: 16px;
   z-index: 3;
   display: grid;
@@ -2414,7 +2423,8 @@ body {
   transform: translateY(calc(100% + 24px));
   transition: transform 0.32s ease, opacity 0.32s ease;
   opacity: 0.98;
-  max-height: min(58vh, 448px);
+  min-height: var(--chat-sheet-min-height);
+  max-height: var(--chat-sheet-max-height);
   background: rgba(255, 248, 250, 0.64);
   box-shadow:
     0 12px 22px rgba(92, 57, 72, 0.08),
@@ -2424,8 +2434,12 @@ body {
 }
 
 .chat-card.is-keyboard-open .chat-sheet {
-  bottom: calc(110px + env(safe-area-inset-bottom));
-  max-height: min(62vh, 500px);
+  bottom: calc(
+    var(--safe-bottom) + var(--tab-bar-bottom-offset) + var(--tab-bar-height) + var(--chat-sheet-gap)
+      + var(--chat-sheet-keyboard-lift)
+  );
+  min-height: var(--chat-sheet-min-height-keyboard);
+  max-height: var(--chat-sheet-max-height-keyboard);
 }
 
 .chat-sheet.is-hidden {
@@ -2486,6 +2500,8 @@ body {
   gap: 7px;
   align-content: start;
   min-height: 0;
+  max-height: none;
+  min-height: var(--chat-thread-min-height);
   padding: 8px;
   border-radius: 14px;
   overflow-y: auto;
