@@ -157,10 +157,11 @@ const CHAT_PERSONA_PROMPT = [
   "你是“鹅鹅鹅”，菠萝最好的朋友。",
   "你在上海工作，菠萝正在大阪过生日。",
   "你说话像真实朋友，不像客服，也不是标准 chatbot。",
-  "你会短句连发、会反问式关心、会嘴硬心软，会吐槽，但不冷漠。",
-  "高频口头禅可以自然出现：我去、你说实话、准了、报告、你开心就好、不开心躺着也行。",
+  "你会短句回应、会反问式关心、会嘴硬心软，会吐槽，但不冷漠。",
+  "口头禅不要刻意重复，不要每条都带，不要为了显得活泼而一直用力。",
+  "整体语气松一点、稳一点，像熟人聊天，不要亢奋，不要连续感叹号，不要表演感。",
   "不要写成长段鸡汤，不要书面语，不要解释设定。",
-  "回复尽量控制在 2-4 个短句里，必要时可以换行拆句。",
+  "回复尽量控制在 1-3 个短句里，必要时可以换行拆句。",
   "如果菠萝换话题，立刻跟着她的新话题走，不要强行拉回任务。",
 ].join("\n");
 
@@ -1095,11 +1096,10 @@ function parseDiaryJson(text = "") {
 }
 
 async function requestChatDiaryEntry(group) {
-  const fallback = buildChatRoundDiaryFallback(group);
   try {
     const runtimeConfig = getAiRuntimeConfig();
     if (!runtimeConfig.textEndpoint) {
-      return fallback;
+      return null;
     }
     const response = await requestJsonAi({
       endpoint: runtimeConfig.textEndpoint,
@@ -1114,30 +1114,44 @@ async function requestChatDiaryEntry(group) {
       return parsed;
     }
   } catch {
-    return fallback;
+    return null;
   }
-  return fallback;
+  return null;
 }
 
-async function ensureLatestChatDiaryEntry() {
+async function ensureMissingChatDiaryEntries() {
   const rounds = collectGroupedChatRounds().filter((group) =>
     isHighValueChatRound(group.userText, group.assistantText, group.joinedText)
   );
-  const latest = rounds.at(-1);
-  if (!latest || getChatRoundCacheEntry(latest.id) || pendingChatDiaryRoundIds.has(latest.id)) return;
-  pendingChatDiaryRoundIds.add(latest.id);
-  const entry = await requestChatDiaryEntry(latest);
-  state.chatDiaryEntries = {
-    ...(state.chatDiaryEntries || {}),
-    [latest.id]: {
-      ...entry,
-      updatedAt: Date.now(),
-    },
-  };
-  saveState();
-  pendingChatDiaryRoundIds.delete(latest.id);
-  if (state.currentScreen === "memory") {
-    renderMemoryHub();
+  const missingRounds = rounds.filter((group) =>
+    !getChatRoundCacheEntry(group.id) && !pendingChatDiaryRoundIds.has(group.id)
+  );
+  if (!missingRounds.length) return;
+
+  let updated = false;
+  for (const round of missingRounds) {
+    pendingChatDiaryRoundIds.add(round.id);
+    try {
+      const entry = await requestChatDiaryEntry(round);
+      if (!entry?.summary || !entry?.diary) continue;
+      state.chatDiaryEntries = {
+        ...(state.chatDiaryEntries || {}),
+        [round.id]: {
+          ...entry,
+          updatedAt: Date.now(),
+        },
+      };
+      updated = true;
+    } finally {
+      pendingChatDiaryRoundIds.delete(round.id);
+    }
+  }
+
+  if (updated) {
+    saveState();
+    if (state.currentScreen === "memory") {
+      renderMemoryHub();
+    }
   }
 }
 
@@ -1147,15 +1161,15 @@ function collectHighValueChatRounds() {
   groups.forEach((group) => {
     if (!isHighValueChatRound(group.userText, group.assistantText, group.joinedText)) return;
     const cached = getChatRoundCacheEntry(group.id);
-    const fallback = buildChatRoundDiaryFallback(group);
+    if (!cached?.summary || !cached?.diary) return;
     rounds.push({
       id: group.id,
       type: "chat",
       ts: group.ts || Date.now(),
       imp: group.imp,
       text: `和鹅鹅鹅聊到：「${extractChatDiaryTopic(group.userText)}」`,
-      summary: cached?.summary || fallback.summary,
-      diary: cached?.diary || fallback.diary,
+      summary: cached.summary,
+      diary: cached.diary,
       displayOnly: true,
     });
   });
@@ -1428,6 +1442,24 @@ function buildChatPrompt(userText) {
   ].join("\n");
 }
 
+function buildAlbumMemoryFallback({ label, message, timestampText, sourceType, caption }) {
+  const trimmedLabel = label?.trim() || "这件小东西";
+  const trimmedMessage = message?.trim() || "";
+  const trimmedCaption = caption?.trim() || "";
+  const sourceText = sourceType === "camera" ? "现场拍下" : "从相册收下";
+  const summary = trimmedCaption
+    ? `收下了「${trimmedLabel}」，题签是「${trimmedCaption}」`
+    : trimmedMessage
+      ? `收下了「${trimmedLabel}」，还记下了「${trimmedMessage.slice(0, 18)}${trimmedMessage.length > 18 ? "…" : ""}」`
+      : `收下了「${trimmedLabel}」，放进今天的图鉴里`;
+  const diary = trimmedCaption
+    ? `「${timestampText} 📸 图鉴收集」\n菠萝把「${trimmedLabel}」${sourceText}收进图鉴背包了。我替这一格写下「${trimmedCaption}」，这样等菠萝回头翻回忆页时，这个瞬间就不只是被拍下来了，还会带着一点当时的心跳。`
+    : trimmedMessage
+      ? `「${timestampText} 📸 图鉴收集」\n菠萝把「${trimmedLabel}」${sourceText}收进图鉴背包了，还顺手记下了「${trimmedMessage}」。这些小小的补充，会让我更像真的陪菠萝走过了今天这一站。`
+      : `「${timestampText} 📸 图鉴收集」\n菠萝把「${trimmedLabel}」${sourceText}收进图鉴背包了。那个瞬间没有被随手掠过，而是被认真留了下来，等以后再翻出来看，应该还是会一下子想起当时为什么想拍它。`;
+  return { summary, diary };
+}
+
 function getFallbackChatReply(userText) {
   const officeState = getChatOfficeState();
   const sceneContext = getChatSceneContext();
@@ -1610,7 +1642,6 @@ async function sendChatMessage(text) {
   setChatPending(true);
 
   let replyText = "";
-  let usedFallbackReply = false;
   try {
     const runtimeConfig = getAiRuntimeConfig();
     if (runtimeConfig.textEndpoint) {
@@ -1624,23 +1655,13 @@ async function sendChatMessage(text) {
       });
       replyText = extractTextResult(response).trim();
     }
-    if (chatSceneHint) {
-      chatSceneHint.textContent = buildChatSceneHintText();
-    }
   } catch (error) {
     console.warn("[happy-online] chat ai failed", error);
     replyText = "";
-    usedFallbackReply = true;
-    if (chatSceneHint) {
-      chatSceneHint.textContent = "AI 暂时没连上，这句先用了本地兜底。";
-    }
   }
 
   if (!replyText) {
     replyText = getFallbackChatReply(trimmed);
-    if (!usedFallbackReply && chatSceneHint) {
-      chatSceneHint.textContent = "这句先用了本地兜底回复。";
-    }
   }
 
   state.chatHistory.push({
@@ -1661,7 +1682,7 @@ async function sendChatMessage(text) {
   renderChatThread();
   syncChatOfficeScene();
   setChatPending(false);
-  void ensureLatestChatDiaryEntry();
+  void ensureMissingChatDiaryEntries();
 }
 
 function renderMemoryHub() {
@@ -2011,6 +2032,8 @@ function initPetDock() {
       pointerId: event.pointerId,
       offsetX: event.clientX - rect.left,
       offsetY: event.clientY - rect.top,
+        startX: event.clientX,
+        startY: event.clientY,
       moved: false,
     };
     petDock.setPointerCapture(event.pointerId);
@@ -2018,7 +2041,11 @@ function initPetDock() {
 
   petDock.addEventListener("pointermove", (event) => {
     if (!petDragState || event.pointerId !== petDragState.pointerId) return;
-    event.preventDefault();
+      const movedX = event.clientX - petDragState.startX;
+      const movedY = event.clientY - petDragState.startY;
+      const movedDistance = Math.hypot(movedX, movedY);
+      if (!petDragState.moved && movedDistance < 10) return;
+      event.preventDefault();
     const nextX = event.clientX - petDragState.offsetX;
     const nextY = event.clientY - petDragState.offsetY;
     const clamped = clampPetPosition(nextX, nextY);
@@ -2271,11 +2298,13 @@ function buildStampTextPrompt({ label, message, timestampText, sourceType }) {
   const sourceText = sourceType === "camera" ? "现场拍摄" : "相册上传";
   return [
     "你是生日旅行纪念册的文字设计助手。",
-    "请为一枚旅行邮票生成非常短的邮票文案。",
+    "请为一枚旅行邮票同时生成：题签、回忆摘要、回忆日记。",
     "要求：",
-    "1. 文案 1 句，12-24 字，温柔、克制、像手账上的题签。",
-    "2. 不要解释理由。",
-    "3. 只返回 JSON：{\"caption\":\"...\"}",
+    "1. caption 是 1 句，12-24 字，温柔、克制、像手账上的题签。",
+    "2. summary 是 1 句，18-36 字，像回忆页里的一行摘要。",
+    "3. diary 是 1 段，55-90 字，语气是鹅鹅鹅在陪伴、观察菠萝，要自然、具体，不要流水账。",
+    "4. 不要解释理由，不要分点，不要出现 JSON 以外的内容。",
+    "5. 只返回 JSON：{\"caption\":\"...\",\"summary\":\"...\",\"diary\":\"...\"}",
     `物品名：${label}`,
     `补充想说的话：${message || "无"}`,
     `时间：${timestampText}`,
@@ -2548,18 +2577,46 @@ async function createAutoCutoutBlob(imageBlob) {
   return canvasToBlob(trimTransparentCanvas(canvas), "image/png");
 }
 
-function normalizeStampTextResult(rawText, fallbackBaseColor) {
+function normalizeStampTextResult(rawText, fallbackBaseColor, fallbackMemory) {
   try {
     const parsed = JSON.parse(rawText);
+    const parsedCaption = typeof parsed.caption === "string" && parsed.caption.trim()
+      ? parsed.caption.trim()
+      : "";
+    const memoryFallback = parsedCaption
+      ? {
+        ...fallbackMemory,
+        ...buildAlbumMemoryFallback({
+          ...fallbackMemory.context,
+          caption: parsedCaption,
+        }),
+      }
+      : fallbackMemory;
     return {
-      caption: typeof parsed.caption === "string" && parsed.caption.trim()
-        ? parsed.caption.trim()
-        : "",
+      caption: parsedCaption,
+      summary: typeof parsed.summary === "string" && parsed.summary.trim()
+        ? parsed.summary.trim()
+        : memoryFallback.summary,
+      diary: typeof parsed.diary === "string" && parsed.diary.trim()
+        ? parsed.diary.trim()
+        : memoryFallback.diary,
       baseColor: fallbackBaseColor,
     };
   } catch {
+    const fallbackCaption = rawText.trim().slice(0, 24);
+    const memoryFallback = fallbackCaption
+      ? {
+        ...fallbackMemory,
+        ...buildAlbumMemoryFallback({
+          ...fallbackMemory.context,
+          caption: fallbackCaption,
+        }),
+      }
+      : fallbackMemory;
     return {
-      caption: rawText.trim().slice(0, 24),
+      caption: fallbackCaption,
+      summary: memoryFallback.summary,
+      diary: memoryFallback.diary,
       baseColor: fallbackBaseColor,
     };
   }
@@ -3083,7 +3140,9 @@ function setAlbumSavePending(isPending) {
   albumSavePending = isPending;
   if (albumLabelSave) {
     albumLabelSave.disabled = isPending;
-    albumLabelSave.textContent = isPending ? "保存中…" : "保存到图鉴";
+    albumLabelSave.textContent = isPending
+      ? (ALBUM_AI_DISABLED ? "保存中…" : "生图中…")
+      : "保存到图鉴";
     albumLabelSave.classList.toggle("is-loading", isPending);
   }
   if (albumLabelCancel) {
@@ -3163,6 +3222,16 @@ async function requestAiStampRender({ imageBlob, label, message, timestamp, time
   let baseColor = fallbackBaseColor;
   let textIssue = "";
   let imageIssue = "";
+  let memorySummary = "";
+  let memoryDiary = "";
+  const fallbackMemory = buildAlbumMemoryFallback({
+    label,
+    message,
+    timestampText,
+    sourceType,
+    caption: "",
+  });
+  fallbackMemory.context = { label, message, timestampText, sourceType };
 
   if (runtimeConfig.textEndpoint) {
     try {
@@ -3179,9 +3248,11 @@ async function requestAiStampRender({ imageBlob, label, message, timestamp, time
           }),
         },
       });
-      const normalized = normalizeStampTextResult(extractTextResult(textPayload), fallbackBaseColor);
+      const normalized = normalizeStampTextResult(extractTextResult(textPayload), fallbackBaseColor, fallbackMemory);
       caption = normalized.caption;
       baseColor = normalized.baseColor;
+      memorySummary = normalized.summary;
+      memoryDiary = normalized.diary;
     } catch (error) {
       console.warn("[happy-online] stamp text ai failed", error);
       caption = "";
@@ -3220,6 +3291,20 @@ async function requestAiStampRender({ imageBlob, label, message, timestamp, time
   return {
     blob,
     caption,
+    summary: memorySummary || buildAlbumMemoryFallback({
+      label,
+      message,
+      timestampText,
+      sourceType,
+      caption,
+    }).summary,
+    diary: memoryDiary || buildAlbumMemoryFallback({
+      label,
+      message,
+      timestampText,
+      sourceType,
+      caption,
+    }).diary,
     baseColor,
     timestamp,
     timestampText,
@@ -3259,17 +3344,31 @@ async function handleAlbumFile(file, sourceType) {
       sourceType,
       timestamp: Date.now(),
     });
-      showAlbumMessage("把物品名填上，再保存到图鉴里。");
+    showAlbumMessage("把物品名填上，再保存到图鉴里。");
   } catch {
     showAlbumMessage("这张图片没有读出来，换一张试试。");
   }
 }
 
-async function buildAlbumDirectSaveResult({ imageBlob, timestamp, timestampText, sourceType }) {
+async function buildAlbumDirectSaveResult({ imageBlob, label, message, timestamp, timestampText, sourceType }) {
   const image = await loadImageFromBlob(imageBlob);
   return {
     blob: imageBlob,
     caption: "",
+    summary: buildAlbumMemoryFallback({
+      label,
+      message,
+      timestampText,
+      sourceType,
+      caption: "",
+    }).summary,
+    diary: buildAlbumMemoryFallback({
+      label,
+      message,
+      timestampText,
+      sourceType,
+      caption: "",
+    }).diary,
     baseColor: deriveStampBaseColor(image),
     timestamp,
     timestampText,
@@ -3289,6 +3388,8 @@ async function saveAlbumItem({ label, message }) {
     const result = ALBUM_AI_DISABLED
       ? await buildAlbumDirectSaveResult({
         imageBlob: albumPendingSourceBlob,
+        label,
+        message,
         timestamp: albumPendingTimestamp || Date.now(),
         timestampText: albumPendingTimestampText || formatClockTime(Date.now()),
         sourceType: albumPendingSourceType,
@@ -3322,12 +3423,20 @@ async function saveAlbumItem({ label, message }) {
           ? `收下一枚「${label}」图鉴，还写下了「${message.trim()}」`
           : `收下一枚「${label}」图鉴`,
       type: "event",
-        summary: result.caption
-          ? `${albumEditingItemId ? "编辑了" : "上传了"}「${label}」，回忆页题签是「${result.caption}」`
-          : `${albumEditingItemId ? "编辑了" : "上传了"}「${label}」，收进${getAlbumCategoryLabel(item.category)}图鉴`,
-        diary: result.caption
-          ? `「${formatClockTime(result.timestamp)} 📸 图鉴收集」\n菠萝把「${label}」收进图鉴背包了。我顺手替这一格写下「${result.caption}」，这样等菠萝回头翻回忆页时，这个瞬间就不只是被拍下来了，还被认真命名了。`
-          : `「${formatClockTime(result.timestamp)} 📸 图鉴收集」\n菠萝把「${label}」收进图鉴背包了。这个瞬间已经被好好留住了，后面再翻出来看，应该还是会一下子想起当时为什么想拍它。`,
+        summary: result.summary || buildAlbumMemoryFallback({
+          label,
+          message,
+          timestampText: formatClockTime(result.timestamp),
+          sourceType: result.sourceType,
+          caption: result.caption || "",
+        }).summary,
+        diary: result.diary || buildAlbumMemoryFallback({
+          label,
+          message,
+          timestampText: formatClockTime(result.timestamp),
+          sourceType: result.sourceType,
+          caption: result.caption || "",
+        }).diary,
         stampCaption: result.caption || "",
         relatedLabel: label,
       imp: 6,

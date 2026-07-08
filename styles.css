@@ -19,8 +19,8 @@
   --chat-sheet-max-height: min(71vh, 590px);
   --chat-sheet-max-height-keyboard: min(68vh, 560px);
   --chat-thread-min-height: clamp(188px, 31vh, 300px);
-  --backpack-header-top: max(24px, calc(var(--safe-top) + 18px));
-  --backpack-shell-top: max(126px, calc(var(--safe-top) + 112px));
+  --backpack-header-top: max(14px, calc(var(--safe-top) + 8px));
+  --backpack-shell-top: max(108px, calc(var(--safe-top) + 92px));
 }
 
 * {
@@ -3733,8 +3733,8 @@ body {
   padding-top: 10px;
   border-top: 1px dashed rgba(199, 162, 130, 0.32);
   color: rgba(112, 79, 59, 0.88);
-  font-size: 13px;
-  line-height: 1.78;
+  font-size: 10px;
+  line-height: 1.58;
   white-space: pre-wrap;
 }
 
