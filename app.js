@@ -1610,6 +1610,7 @@ async function sendChatMessage(text) {
   setChatPending(true);
 
   let replyText = "";
+  let usedFallbackReply = false;
   try {
     const runtimeConfig = getAiRuntimeConfig();
     if (runtimeConfig.textEndpoint) {
@@ -1623,12 +1624,23 @@ async function sendChatMessage(text) {
       });
       replyText = extractTextResult(response).trim();
     }
-  } catch {
+    if (chatSceneHint) {
+      chatSceneHint.textContent = buildChatSceneHintText();
+    }
+  } catch (error) {
+    console.warn("[happy-online] chat ai failed", error);
     replyText = "";
+    usedFallbackReply = true;
+    if (chatSceneHint) {
+      chatSceneHint.textContent = "AI 暂时没连上，这句先用了本地兜底。";
+    }
   }
 
   if (!replyText) {
     replyText = getFallbackChatReply(trimmed);
+    if (!usedFallbackReply && chatSceneHint) {
+      chatSceneHint.textContent = "这句先用了本地兜底回复。";
+    }
   }
 
   state.chatHistory.push({
@@ -2243,6 +2255,18 @@ async function dataUrlToBlob(dataUrl) {
   return response.blob();
 }
 
+function normalizeAiErrorMessage(rawMessage, fallback = "AI 暂时没连上") {
+  if (!rawMessage) return fallback;
+  const collapsed = String(rawMessage).replace(/\s+/g, " ").trim();
+  if (!collapsed) return fallback;
+  return collapsed.length > 88 ? `${collapsed.slice(0, 88)}…` : collapsed;
+}
+
+function getAiErrorMessage(error, fallback) {
+  if (!error) return fallback;
+  return normalizeAiErrorMessage(error.message, fallback);
+}
+
 function buildStampTextPrompt({ label, message, timestampText, sourceType }) {
   const sourceText = sourceType === "camera" ? "现场拍摄" : "相册上传";
   return [
@@ -2271,6 +2295,27 @@ function buildStampImagePrompt() {
   ].join("\n");
 }
 
+async function prepareImageBlobForAi(imageBlob, { maxSide = 1536, quality = 0.86 } = {}) {
+  const image = await loadImageFromBlob(imageBlob);
+  const sourceWidth = image.naturalWidth || image.width;
+  const sourceHeight = image.naturalHeight || image.height;
+  const longestSide = Math.max(sourceWidth, sourceHeight);
+  const needsResize = longestSide > maxSide;
+  const shouldCompress = imageBlob.size > 2.4 * 1024 * 1024;
+
+  if (!needsResize && !shouldCompress) {
+    return imageBlob;
+  }
+
+  const scale = Math.min(1, maxSide / longestSide);
+  const canvas = document.createElement("canvas");
+  const context = canvas.getContext("2d");
+  canvas.width = Math.max(1, Math.round(sourceWidth * scale));
+  canvas.height = Math.max(1, Math.round(sourceHeight * scale));
+  context.drawImage(image, 0, 0, canvas.width, canvas.height);
+  return canvasToBlob(canvas, "image/jpeg", quality);
+}
+
 async function requestJsonAi({ endpoint, headerName, apiKey, body }) {
   const response = await fetch(endpoint, {
     method: "POST",
@@ -2281,11 +2326,27 @@ async function requestJsonAi({ endpoint, headerName, apiKey, body }) {
     body: JSON.stringify(body),
   });
 
-  if (!response.ok) {
-    throw new Error(`AI request failed with status ${response.status}`);
+  const rawText = await response.text();
+  let payload = null;
+  if (rawText) {
+    try {
+      payload = JSON.parse(rawText);
+    } catch {
+      payload = null;
+    }
   }
 
-  return response.json();
+  if (!response.ok) {
+    const detail = payload?.error
+      || payload?.message
+      || rawText
+      || `AI request failed with status ${response.status}`;
+    throw new Error(normalizeAiErrorMessage(detail, `AI request failed with status ${response.status}`));
+  }
+
+  if (payload) return payload;
+  if (!rawText) return {};
+  throw new Error("AI 返回了空结果。");
 }
 
 function extractTextResult(payload) {
@@ -3100,6 +3161,8 @@ async function requestAiStampRender({ imageBlob, label, message, timestamp, time
   const runtimeConfig = getAiRuntimeConfig();
   let caption = "";
   let baseColor = fallbackBaseColor;
+  let textIssue = "";
+  let imageIssue = "";
 
   if (runtimeConfig.textEndpoint) {
     try {
@@ -3119,15 +3182,18 @@ async function requestAiStampRender({ imageBlob, label, message, timestamp, time
       const normalized = normalizeStampTextResult(extractTextResult(textPayload), fallbackBaseColor);
       caption = normalized.caption;
       baseColor = normalized.baseColor;
-    } catch {
+    } catch (error) {
+      console.warn("[happy-online] stamp text ai failed", error);
       caption = "";
       baseColor = fallbackBaseColor;
+      textIssue = getAiErrorMessage(error, "题签服务暂时没连上");
     }
   }
 
   let blob;
   try {
-    const imageDataUrl = await blobToDataUrl(imageBlob);
+    const preparedImageBlob = await prepareImageBlobForAi(imageBlob);
+    const imageDataUrl = await blobToDataUrl(preparedImageBlob);
     const imagePayload = await requestJsonAi({
       endpoint: runtimeConfig.imageEndpoint,
       headerName: runtimeConfig.imageAuthHeader,
@@ -3143,7 +3209,9 @@ async function requestAiStampRender({ imageBlob, label, message, timestamp, time
       throw new Error("No generated image returned");
     }
     blob = await createAutoCutoutBlob(await dataUrlToBlob(generatedDataUrl));
-  } catch {
+  } catch (error) {
+    console.warn("[happy-online] stamp image ai failed", error);
+    imageIssue = getAiErrorMessage(error, "贴纸生成暂时没连上");
     blob = await createLocalStampMock({
       imageBlob,
     });
@@ -3170,6 +3238,10 @@ async function requestAiStampRender({ imageBlob, label, message, timestamp, time
         caption,
         baseColor,
       }),
+    },
+    aiStatus: {
+      textIssue,
+      imageIssue,
     },
   };
 }
@@ -3263,9 +3335,19 @@ async function saveAlbumItem({ label, message }) {
     closeLabelSheet();
     await loadAlbumItems();
     renderAlbum();
+    const aiStatus = result.aiStatus || {};
+    if (aiStatus.imageIssue && aiStatus.textIssue) {
+      showAlbumMessage(`已经把「${label}」收进图鉴了；AI 题签和贴纸都失败了，先用了本地兜底。`);
+    } else if (aiStatus.imageIssue) {
+      showAlbumMessage(`已经把「${label}」收进图鉴了；贴纸 AI 暂时没连上，先用了本地裁切。`);
+    } else if (aiStatus.textIssue) {
+      showAlbumMessage(`已经把「${label}」收进图鉴了；题签 AI 暂时没连上，先留空保存。`);
+    } else {
       showAlbumMessage(`已经把「${label}」收进图鉴了`);
-  } catch {
-      showAlbumMessage("这格图鉴没有保存成功，再试一次。");
+    }
+  } catch (error) {
+    console.warn("[happy-online] save album item failed", error);
+    showAlbumMessage("这格图鉴没有保存成功，再试一次。");
     setAlbumSavePending(false);
   }
 }
