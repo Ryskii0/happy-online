@@ -37,6 +37,7 @@ const defaultState = {
   scene: "free",
   officeStateKey: "working",
   officeWalkDirection: "right",
+  officeDynamicEnabled: false,
   memorySeedVersion: 0,
   chatDiaryEntries: {},
   badges: {
@@ -331,6 +332,7 @@ const chatSceneCharacter = document.querySelector(".chat-scene-character");
 const chatSceneBubble = document.querySelector(".chat-scene-bubble");
 const chatSceneSprite = document.querySelector(".chat-scene-sprite");
 const chatSceneZone = document.querySelector(".chat-scene-zone");
+const chatMotionToggle = document.querySelector(".chat-motion-toggle");
 const chatSheet = document.querySelector(".chat-sheet");
 const chatSheetClose = document.querySelector(".chat-sheet-close");
 const chatThread = document.querySelector(".chat-thread");
@@ -443,6 +445,9 @@ let petDragState = null;
 let petDragSuppressClickUntil = 0;
 let chatOfficeTimer = null;
 let chatWalkFrameTimer = null;
+let chatOfficeMotionFrame = null;
+let chatOfficeMotion = null;
+let chatOfficeVisualPosition = null;
 const pendingChatDiaryRoundIds = new Set();
 
 function syncViewportMetrics() {
@@ -595,13 +600,24 @@ function setChatOfficeState(nextKey, persist = true) {
   if (persist) saveState();
 }
 
-function getChatOfficeSpriteSrc() {
-  const officeState = getChatOfficeState();
+function getChatOfficeWalkFrames(direction = state.officeWalkDirection) {
+  const walkingState = CHAT_OFFICE_STATES.find((item) => item.key === "walking");
+  return walkingState?.spriteFrames?.[direction === "left" ? "left" : "right"] || [];
+}
+
+function getChatOfficeSpriteSrc(officeState = getChatOfficeState()) {
   if (!officeState.spriteFrames) return officeState.sprite;
   const direction = state.officeWalkDirection === "left" ? "left" : "right";
   const frames = officeState.spriteFrames[direction] || officeState.spriteFrames.right || officeState.spriteFrames.left || [];
   if (!frames.length) return "";
   const frameIndex = Math.floor(Date.now() / 260) % frames.length;
+  return frames[frameIndex];
+}
+
+function getChatOfficeWalkSpriteSrc() {
+  const frames = getChatOfficeWalkFrames();
+  if (!frames.length) return getChatOfficeSpriteSrc();
+  const frameIndex = Math.floor(Date.now() / 220) % frames.length;
   return frames[frameIndex];
 }
 
@@ -611,8 +627,99 @@ function getNextOfficeStateKey() {
   return candidates[Math.floor(Math.random() * candidates.length)]?.key || CHAT_OFFICE_STATES[0].key;
 }
 
+function getNextDynamicOfficeStateKey() {
+  const currentKey = getChatOfficeState().key;
+  const candidates = CHAT_OFFICE_STATES.filter((item) => item.key !== currentKey && item.key !== "walking");
+  return candidates[Math.floor(Math.random() * candidates.length)]?.key || "working";
+}
+
 function isChatSheetOpen() {
   return Boolean(chatSheet && !chatSheet.classList.contains("is-hidden"));
+}
+
+function getChatOfficeVisualPosition() {
+  const officeState = getChatOfficeState();
+  return chatOfficeVisualPosition || { x: officeState.x, y: officeState.y };
+}
+
+function setChatOfficeVisualPosition(position) {
+  chatOfficeVisualPosition = { x: position.x, y: position.y };
+  if (!chatSceneCharacter) return;
+  chatSceneCharacter.style.left = `${position.x}%`;
+  chatSceneCharacter.style.top = `${position.y}%`;
+}
+
+function easeInOutCubic(progress) {
+  return progress < 0.5
+    ? 4 * progress * progress * progress
+    : 1 - Math.pow(-2 * progress + 2, 3) / 2;
+}
+
+function syncChatMotionToggle() {
+  if (!chatMotionToggle) return;
+  const enabled = Boolean(state.officeDynamicEnabled);
+  chatMotionToggle.textContent = enabled ? "散步 ON" : "散步 OFF";
+  chatMotionToggle.setAttribute("aria-pressed", enabled ? "true" : "false");
+  chatMotionToggle.classList.toggle("is-active", enabled);
+}
+
+function stopChatOfficeMotion() {
+  if (chatOfficeMotionFrame) {
+    window.cancelAnimationFrame(chatOfficeMotionFrame);
+    chatOfficeMotionFrame = null;
+  }
+  chatOfficeMotion = null;
+  chatSceneCharacter?.classList.remove("is-walking");
+}
+
+function runChatOfficeMotionTo(nextKey) {
+  const nextState = CHAT_OFFICE_STATES.find((item) => item.key === nextKey);
+  if (!nextState || !chatSceneCharacter) return;
+  const start = getChatOfficeVisualPosition();
+  const target = { x: nextState.x, y: nextState.y };
+  const distance = Math.hypot(target.x - start.x, target.y - start.y);
+  const duration = Math.min(4200, Math.max(1400, distance * 65));
+  state.officeWalkDirection = target.x < start.x ? "left" : "right";
+  chatOfficeMotion = {
+    nextKey,
+    start,
+    target,
+    startTime: performance.now(),
+    duration,
+  };
+  chatSceneCharacter.classList.add("is-walking");
+  chatSceneCharacter.dataset.state = "walking";
+  if (chatSceneZone) chatSceneZone.textContent = "走动中";
+  if (chatSceneBubble) chatSceneBubble.textContent = "我边走边听。";
+  if (chatSceneSprite) chatSceneSprite.src = getChatOfficeWalkSpriteSrc();
+
+  const step = (now) => {
+    if (!chatOfficeMotion || state.currentScreen !== "chat" || !state.officeDynamicEnabled) {
+      stopChatOfficeMotion();
+      syncChatOfficeScene();
+      return;
+    }
+    const elapsed = now - chatOfficeMotion.startTime;
+    const progress = Math.min(1, elapsed / chatOfficeMotion.duration);
+    const eased = easeInOutCubic(progress);
+    setChatOfficeVisualPosition({
+      x: chatOfficeMotion.start.x + (chatOfficeMotion.target.x - chatOfficeMotion.start.x) * eased,
+      y: chatOfficeMotion.start.y + (chatOfficeMotion.target.y - chatOfficeMotion.start.y) * eased,
+    });
+    if (chatSceneSprite) chatSceneSprite.src = getChatOfficeWalkSpriteSrc();
+    if (progress < 1) {
+      chatOfficeMotionFrame = window.requestAnimationFrame(step);
+      return;
+    }
+    const arrivedKey = chatOfficeMotion.nextKey;
+    stopChatOfficeMotion();
+    setChatOfficeVisualPosition(target);
+    setChatOfficeState(arrivedKey);
+    syncChatOfficeScene();
+  };
+
+  if (chatOfficeMotionFrame) window.cancelAnimationFrame(chatOfficeMotionFrame);
+  chatOfficeMotionFrame = window.requestAnimationFrame(step);
 }
 
 function startChatOfficeLoop() {
@@ -620,11 +727,16 @@ function startChatOfficeLoop() {
   const loop = () => {
     chatOfficeTimer = window.setTimeout(() => {
       if (state.currentScreen === "chat" && !isChatSheetOpen()) {
-        setChatOfficeState(getNextOfficeStateKey());
-        syncChatOfficeScene();
+        if (state.officeDynamicEnabled) {
+          runChatOfficeMotionTo(getNextDynamicOfficeStateKey());
+        } else {
+          const nextKey = getNextOfficeStateKey();
+          setChatOfficeState(nextKey);
+          syncChatOfficeScene();
+        }
       }
       loop();
-    }, 3600 + Math.random() * 1800);
+    }, state.officeDynamicEnabled ? 5200 + Math.random() * 2400 : 3600 + Math.random() * 1800);
   };
   loop();
 }
@@ -642,6 +754,7 @@ function stopChatOfficeLoop() {
   if (!chatOfficeTimer) return;
   window.clearTimeout(chatOfficeTimer);
   chatOfficeTimer = null;
+  stopChatOfficeMotion();
 }
 
 function stopChatWalkLoop() {
@@ -1508,6 +1621,9 @@ function buildChatSceneBubbleText() {
   if (isChatSheetOpen()) {
     return "我在，继续说。";
   }
+  if (chatOfficeMotion) {
+    return "我边走边听。";
+  }
   return state.scene === "free" ? officeState.bubble : getChatSceneContext().cue;
 }
 
@@ -1521,15 +1637,16 @@ function syncChatOfficeScene() {
   const officeState = getChatOfficeState();
   const sceneContext = getChatSceneContext();
   if (chatSceneCharacter) {
-    chatSceneCharacter.style.left = `${officeState.x}%`;
-    chatSceneCharacter.style.top = `${officeState.y}%`;
-    chatSceneCharacter.dataset.state = officeState.key;
+    const position = chatOfficeMotion ? getChatOfficeVisualPosition() : { x: officeState.x, y: officeState.y };
+    setChatOfficeVisualPosition(position);
+    chatSceneCharacter.dataset.state = chatOfficeMotion ? "walking" : officeState.key;
+    chatSceneCharacter.classList.toggle("is-walking", Boolean(chatOfficeMotion));
   }
   if (chatSceneSprite) {
-    chatSceneSprite.src = getChatOfficeSpriteSrc();
+    chatSceneSprite.src = chatOfficeMotion ? getChatOfficeWalkSpriteSrc() : getChatOfficeSpriteSrc();
   }
   if (chatSceneZone) {
-    chatSceneZone.textContent = officeState.label;
+    chatSceneZone.textContent = chatOfficeMotion ? "走动中" : officeState.label;
   }
   if (chatSceneBubble) {
     chatSceneBubble.textContent = buildChatSceneBubbleText();
@@ -1539,6 +1656,15 @@ function syncChatOfficeScene() {
   }
   if (chatSceneHint) {
     chatSceneHint.textContent = buildChatSceneHintText();
+  }
+  syncChatMotionToggle();
+}
+
+function restartChatOfficeLoop() {
+  stopChatOfficeLoop();
+  if (state.currentScreen === "chat") {
+    syncChatOfficeScene();
+    startChatOfficeLoop();
   }
 }
 
@@ -4043,6 +4169,19 @@ memorySaveButton?.addEventListener("click", () => {
 
 chatSceneCharacter?.addEventListener("click", () => {
   openChatSheet();
+});
+
+chatMotionToggle?.addEventListener("click", () => {
+  state.officeDynamicEnabled = !state.officeDynamicEnabled;
+  saveState();
+  if (!state.officeDynamicEnabled) {
+    stopChatOfficeMotion();
+    chatOfficeVisualPosition = null;
+  }
+  restartChatOfficeLoop();
+  if (state.officeDynamicEnabled && state.currentScreen === "chat" && !isChatSheetOpen()) {
+    runChatOfficeMotionTo(getNextDynamicOfficeStateKey());
+  }
 });
 
 chatComposer?.addEventListener("submit", async (event) => {

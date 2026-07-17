@@ -2313,6 +2313,27 @@ body {
   box-shadow: none;
 }
 
+.chat-motion-toggle {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 3;
+  border: 1px dashed rgba(160, 119, 92, 0.42);
+  border-radius: 999px;
+  padding: 4px 8px 5px;
+  color: rgba(100, 70, 55, 0.84);
+  font: 900 9px/1 "Songti SC", "STSong", "Noto Serif CJK SC", "Source Han Serif SC", "SimSun", serif;
+  letter-spacing: 0.08em;
+  background: rgba(255, 249, 238, 0.86);
+  box-shadow: 0 5px 10px rgba(116, 82, 58, 0.08);
+}
+
+.chat-motion-toggle.is-active {
+  color: rgba(96, 58, 72, 0.94);
+  border-color: rgba(193, 154, 169, 0.56);
+  background: rgba(255, 239, 244, 0.9);
+}
+
 .chat-office-scene::before {
   display: none;
 }
@@ -2365,6 +2386,10 @@ body {
 
 .chat-scene-character:hover {
   transform: translate(-50%, calc(-50% - 2px));
+}
+
+.chat-scene-character.is-walking {
+  transition: transform 0.25s ease;
 }
 
 .chat-scene-bubble {
