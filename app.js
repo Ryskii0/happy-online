@@ -154,6 +154,43 @@ const CHAT_OFFICE_STATES = [
   },
 ];
 
+const CHAT_OFFICE_WALKABLE_NODES = {
+  working: { x: 30, y: 24 },
+  workDoor: { x: 30, y: 40 },
+  upperHall: { x: 54, y: 40 },
+  snackDoor: { x: 76, y: 40 },
+  snacking: { x: 76, y: 16 },
+  centerHall: { x: 54, y: 58 },
+  slackDoor: { x: 30, y: 58 },
+  slacking: { x: 21, y: 54 },
+  lowerHall: { x: 54, y: 73 },
+  eating: { x: 56, y: 73 },
+  chatDoor: { x: 30, y: 73 },
+  chatting: { x: 22, y: 78 },
+};
+
+const CHAT_OFFICE_WALKABLE_LINKS = [
+  ["working", "workDoor"],
+  ["workDoor", "upperHall"],
+  ["upperHall", "snackDoor"],
+  ["snackDoor", "snacking"],
+  ["upperHall", "centerHall"],
+  ["centerHall", "slackDoor"],
+  ["slackDoor", "slacking"],
+  ["centerHall", "lowerHall"],
+  ["lowerHall", "eating"],
+  ["lowerHall", "chatDoor"],
+  ["chatDoor", "chatting"],
+];
+
+const CHAT_OFFICE_STATE_NODE_MAP = {
+  working: "working",
+  slacking: "slacking",
+  snacking: "snacking",
+  eating: "eating",
+  chatting: "chatting",
+};
+
 const CHAT_PERSONA_PROMPT = [
   "你是“鹅鹅鹅”，菠萝最好的朋友。",
   "你在上海工作，菠萝正在大阪过生日。",
@@ -633,6 +670,94 @@ function getNextDynamicOfficeStateKey() {
   return candidates[Math.floor(Math.random() * candidates.length)]?.key || "working";
 }
 
+function getOfficePointDistance(first, second) {
+  return Math.hypot(second.x - first.x, second.y - first.y);
+}
+
+function getNearestWalkableOfficeNode(position) {
+  return Object.entries(CHAT_OFFICE_WALKABLE_NODES).reduce((nearest, [key, point]) => {
+    const distance = getOfficePointDistance(position, point);
+    return !nearest || distance < nearest.distance ? { key, distance } : nearest;
+  }, null)?.key;
+}
+
+function findChatOfficeWalkableNodePath(startKey, targetKey) {
+  if (!startKey || !targetKey) return [];
+  if (startKey === targetKey) return [startKey];
+  const graph = CHAT_OFFICE_WALKABLE_LINKS.reduce((nextGraph, [first, second]) => {
+    nextGraph[first] = nextGraph[first] || [];
+    nextGraph[second] = nextGraph[second] || [];
+    nextGraph[first].push(second);
+    nextGraph[second].push(first);
+    return nextGraph;
+  }, {});
+  const queue = [[startKey]];
+  const visited = new Set([startKey]);
+  while (queue.length) {
+    const path = queue.shift();
+    const lastKey = path.at(-1);
+    const nextKeys = graph[lastKey] || [];
+    for (const nextKey of nextKeys) {
+      if (visited.has(nextKey)) continue;
+      const nextPath = [...path, nextKey];
+      if (nextKey === targetKey) return nextPath;
+      visited.add(nextKey);
+      queue.push(nextPath);
+    }
+  }
+  return [startKey, targetKey];
+}
+
+function normalizeChatOfficeRoute(points) {
+  return points.reduce((route, point) => {
+    const lastPoint = route.at(-1);
+    if (!lastPoint || getOfficePointDistance(lastPoint, point) > 0.8) {
+      route.push({ x: point.x, y: point.y });
+    }
+    return route;
+  }, []);
+}
+
+function getChatOfficeWalkableRoute(start, target, targetStateKey) {
+  const startNodeKey = getNearestWalkableOfficeNode(start);
+  const targetNodeKey = CHAT_OFFICE_STATE_NODE_MAP[targetStateKey] || getNearestWalkableOfficeNode(target);
+  const nodePath = findChatOfficeWalkableNodePath(startNodeKey, targetNodeKey);
+  return normalizeChatOfficeRoute([
+    start,
+    ...nodePath.map((key) => CHAT_OFFICE_WALKABLE_NODES[key]).filter(Boolean),
+    target,
+  ]);
+}
+
+function getChatOfficeRouteDistance(route) {
+  return route.reduce((distance, point, index) => {
+    if (index === 0) return distance;
+    return distance + getOfficePointDistance(route[index - 1], point);
+  }, 0);
+}
+
+function getChatOfficeRoutePosition(route, progress) {
+  if (!route.length) return { x: 0, y: 0 };
+  if (route.length === 1 || progress >= 1) return route.at(-1);
+  const totalDistance = getChatOfficeRouteDistance(route);
+  let remainingDistance = totalDistance * progress;
+  for (let index = 1; index < route.length; index += 1) {
+    const start = route[index - 1];
+    const end = route[index];
+    const segmentDistance = getOfficePointDistance(start, end);
+    if (remainingDistance > segmentDistance) {
+      remainingDistance -= segmentDistance;
+      continue;
+    }
+    const segmentProgress = segmentDistance ? remainingDistance / segmentDistance : 1;
+    return {
+      x: start.x + (end.x - start.x) * segmentProgress,
+      y: start.y + (end.y - start.y) * segmentProgress,
+    };
+  }
+  return route.at(-1);
+}
+
 function isChatSheetOpen() {
   return Boolean(chatSheet && !chatSheet.classList.contains("is-hidden"));
 }
@@ -677,12 +802,14 @@ function runChatOfficeMotionTo(nextKey) {
   if (!nextState || !chatSceneCharacter) return;
   const start = getChatOfficeVisualPosition();
   const target = { x: nextState.x, y: nextState.y };
-  const distance = Math.hypot(target.x - start.x, target.y - start.y);
-  const duration = Math.min(4200, Math.max(1400, distance * 65));
-  state.officeWalkDirection = target.x < start.x ? "left" : "right";
+  const route = getChatOfficeWalkableRoute(start, target, nextKey);
+  const distance = getChatOfficeRouteDistance(route);
+  const duration = Math.min(6200, Math.max(1600, distance * 72));
+  const firstStep = route[1] || target;
+  state.officeWalkDirection = firstStep.x < start.x ? "left" : "right";
   chatOfficeMotion = {
     nextKey,
-    start,
+    route,
     target,
     startTime: performance.now(),
     duration,
@@ -702,10 +829,12 @@ function runChatOfficeMotionTo(nextKey) {
     const elapsed = now - chatOfficeMotion.startTime;
     const progress = Math.min(1, elapsed / chatOfficeMotion.duration);
     const eased = easeInOutCubic(progress);
-    setChatOfficeVisualPosition({
-      x: chatOfficeMotion.start.x + (chatOfficeMotion.target.x - chatOfficeMotion.start.x) * eased,
-      y: chatOfficeMotion.start.y + (chatOfficeMotion.target.y - chatOfficeMotion.start.y) * eased,
-    });
+    const currentPosition = getChatOfficeVisualPosition();
+    const nextPosition = getChatOfficeRoutePosition(chatOfficeMotion.route, eased);
+    if (Math.abs(nextPosition.x - currentPosition.x) > 0.06) {
+      state.officeWalkDirection = nextPosition.x < currentPosition.x ? "left" : "right";
+    }
+    setChatOfficeVisualPosition(nextPosition);
     if (chatSceneSprite) chatSceneSprite.src = getChatOfficeWalkSpriteSrc();
     if (progress < 1) {
       chatOfficeMotionFrame = window.requestAnimationFrame(step);
@@ -726,7 +855,7 @@ function startChatOfficeLoop() {
   if (chatOfficeTimer) return;
   const loop = () => {
     chatOfficeTimer = window.setTimeout(() => {
-      if (state.currentScreen === "chat" && !isChatSheetOpen()) {
+      if (state.currentScreen === "chat" && !isChatSheetOpen() && !chatOfficeMotion) {
         if (state.officeDynamicEnabled) {
           runChatOfficeMotionTo(getNextDynamicOfficeStateKey());
         } else {
